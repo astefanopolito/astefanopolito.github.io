@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Fabflix 
-permalink: /about/
+permalink: /Fabflix/
 ---
 
 Fabflix is my capstone project.
