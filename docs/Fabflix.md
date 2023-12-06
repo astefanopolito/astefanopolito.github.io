@@ -4,7 +4,7 @@ title: Fabflix
 permalink: /Fabflix/
 ---
 
-##Project Description
+## Project Description
 
 Fabflix is an exercise in implementing relational databases, load balancing,
 and cloud computing into a typical consumer model web application in order to
@@ -19,7 +19,7 @@ through a collection of tables and links, where users can click on various
 movies, genres, and stars to see all 
 
 
-##Design Choices
+## Design Choices
 
 
 
