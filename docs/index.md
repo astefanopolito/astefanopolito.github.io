@@ -5,6 +5,10 @@
 layout: home
 ---
 
-# Capstone Project
+<h1>Capstone Project</h1>
 
-![Fabflix](https://astefanopolito.github.io/Fabflix/)
+<a class="post-link" href="/Fabflix/">Fabflix</a>
+
+<h1>Side Projects</h1>
+
+<a class="post-link" href="/Awkcel/">Awkcel</a>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Awkcel | Andrea Stefano Polito</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="Awkcel" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Portfolio Home Page" />
+<meta property="og:description" content="Portfolio Home Page" />
+<link rel="canonical" href="http://localhost:4000/Awkcel/" />
+<meta property="og:url" content="http://localhost:4000/Awkcel/" />
+<meta property="og:site_name" content="Andrea Stefano Polito" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Awkcel" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Portfolio Home Page","headline":"Awkcel","url":"http://localhost:4000/Awkcel/"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Andrea Stefano Polito" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Andrea Stefano Polito</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/Awkcel/">Awkcel</a><a class="page-link" href="/Fabflix/">Fabflix</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Awkcel</h1>
+  </header>
+
+  <div class="post-content">
+    <h2 id="project-description">Project Description</h2>
+
+<p>Awk is a very unique scripting language used in Linux. It’s technically
+a command, such as “cd” or “ls”, but for input it accepts written scripts, like
+an interpreter. It is especially useful for data manipulation and analysis,
+since it’s primary feature is scanning documents line by line, matching and
+manipulating them according to how the inputted script is written.</p>
+
+<p>Although its functionality is incredibly useful, it becomes more tedious when
+working with tsv, or tab separated, files. There is no built in functionality
+for referencing headers, as the program only runs line by line.</p>
+
+<p>Thus, the goal of awkcel is to create a wrapper for awk, where columns in the
+file can be referenced by their headers, and data can be collected and analyzed
+solely through reference.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+
+<span class="nv">awkstring</span><span class="o">=</span><span class="nv">$1</span>
+<span class="nv">file</span><span class="o">=</span><span class="nv">$2</span>
+
+<span class="c">#Get headers from file and store in bash array</span>
+
+<span class="nv">headers</span><span class="o">=(</span><span class="si">$(</span><span class="nb">awk</span> <span class="nt">-F</span><span class="s1">'\t'</span> <span class="s1">'
+	BEGIN {
+	HEADER=0
+	}
+	substr($1,1,1) !="#" &amp;&amp; HEADER==0 {
+	HEADER=1;
+	for (i=1;i&lt;=NF;i++) {
+		print $i
+	}
+}'</span> <span class="nv">$file</span><span class="si">)</span><span class="o">)</span>
+
+<span class="c">#Skip header line and comments</span>
+
+<span class="nv">varstring</span><span class="o">=</span><span class="s2">"BEGIN {HEADER=0;"</span>
+
+<span class="k">for</span> <span class="o">((</span> <span class="nv">i</span><span class="o">=</span>0 <span class="p">;</span> i &lt; <span class="k">${#</span><span class="nv">headers</span><span class="p">[@]</span><span class="k">}</span> <span class="p">;</span> i++<span class="o">))</span>
+<span class="k">do
+	</span><span class="nv">varstring</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">varstring</span><span class="k">}</span><span class="s2">COLNAMES[</span><span class="nv">$i</span><span class="s2">]=</span><span class="se">\"</span><span class="k">${</span><span class="nv">headers</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span><span class="k">}</span><span class="se">\"</span><span class="s2">;"</span>
+<span class="k">done
+
+</span><span class="nv">varstring</span><span class="o">=</span><span class="s2">"</span><span class="nv">$varstring</span><span class="s2">} substr(</span><span class="se">\$</span><span class="s2">1,1,1)==</span><span class="se">\"</span><span class="s2">#</span><span class="se">\"</span><span class="s2">{next} HEADER==0{HEADER=1;next}{"</span>
+
+
+<span class="k">for</span> <span class="o">((</span> <span class="nv">i</span><span class="o">=</span>0 <span class="p">;</span> i &lt; <span class="k">${#</span><span class="nv">headers</span><span class="p">[@]</span><span class="k">}</span> <span class="p">;</span> i++<span class="o">))</span>
+<span class="k">do</span>
+	<span class="c">#OPTIMIZATION::: Check if variable is called in the awk command passed by user</span>
+	<span class="c">#so unused columns are not loaded into memory needlessly</span>
+
+	<span class="c">#NOTE: This runs the risk of loading unused columns if column names are refrenced</span>
+	<span class="c">#not as variables but rather as parts of strings</span>
+	<span class="k">if</span> <span class="o">[[</span> <span class="nv">$awkstring</span> <span class="o">=</span>~ <span class="k">${</span><span class="nv">headers</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span><span class="k">}</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then
+		</span><span class="nv">varstring</span><span class="o">=</span><span class="k">${</span><span class="nv">varstring</span><span class="k">}${</span><span class="nv">headers</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span><span class="k">}</span><span class="o">=</span><span class="se">\$</span><span class="k">$((</span><span class="nv">$i</span><span class="o">+</span><span class="m">1</span><span class="k">))</span><span class="se">\;</span>
+	<span class="k">fi
+done
+</span><span class="nv">varstring</span><span class="o">=</span><span class="k">${</span><span class="nv">varstring</span><span class="k">}</span><span class="o">}</span>
+
+<span class="c">#Load variables into user inputted awk command</span>
+
+<span class="nv">awkstring</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">varstring</span><span class="k">}${</span><span class="nv">awkstring</span><span class="k">}</span><span class="s2">"</span>
+
+<span class="c">#Finally, call awk</span>
+
+<span class="nb">awk</span> <span class="s2">"</span><span class="nv">$awkstring</span><span class="s2">"</span> <span class="nv">$file</span>
+
+</code></pre></div></div>
+
+<p>Below is a quick example of how the script is used, where column names can be
+reference directly in the scripting language. This is an example scenario with
+historical stock data, where each column header is the name of a new stock. The
+goal here is to determine Amazon’s worst single day performance.</p>
+
+<p>SHELL COMMAND:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+./awkcel 'BEGIN {
+	count=0;
+}
+
+count==0{
+	max=AMZN;
+	count++;
+}
+
+count==1{
+	max=max-AMZN;
+	prev=AMZN
+	prevdate=date;
+	worst=date
+	count++;
+}
+
+{
+	if ((prev - AMZN) &gt; max &amp;&amp; prev!="_" &amp;&amp; AMZN!="_") {
+		max=prev-AMZN
+		worst=date
+	}
+	prev=AMZN
+	prevdate=date
+}
+
+END {
+	printf "%s: %d\n", worst, max;
+}
+' historical.2011.tsv
+
+---------------------------
+OUTPUT:
+
+2011-10-26: 29
+
+---------------------------
+</code></pre></div></div>
+
+
+  </div>
+
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Andrea Stefano Polito</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Andrea Stefano Polito</li><li><a class="u-email" href="mailto:astefanopolito@gmail.com">astefanopolito@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/astefanopolito"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">astefanopolito</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Portfolio Home Page</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
