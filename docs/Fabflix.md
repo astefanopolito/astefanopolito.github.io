@@ -4,6 +4,8 @@ title: Fabflix
 permalink: /Fabflix/
 ---
 
+![Fabflix Demo](122bbread.com)
+
 ## Project Description
 
 ![Fabflix](/FabFlix.png)
