@@ -4,7 +4,9 @@ title: Fabflix
 permalink: /Fabflix/
 ---
 
-![Fabflix Demo](122bbread.com)
+![Fabflix Demo](http://www.122bbread.com)
+
+(Press "Demo" for login and checkout)
 
 ## Project Description
 
