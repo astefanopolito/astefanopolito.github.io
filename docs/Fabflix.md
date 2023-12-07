@@ -6,7 +6,7 @@ permalink: /Fabflix/
 
 ## Project Description
 
-![Fabflix](/Fabflix.png)
+![Fabflix](/FabFlix.png)
 
 Fabflix is an exercise in implementing relational databases, load balancing,
 and cloud computing into a typical consumer model web application in order to
