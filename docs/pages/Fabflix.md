@@ -4,7 +4,9 @@ title: Fabflix
 permalink: /Fabflix/
 ---
 
-Fabflix Demo: http://www.122bbread.com
+[Github Repo](https://github.com/astefanopolito/Fabflix)
+
+[Fabflix Demo](http://www.122bbread.com)
 
 (Press "Demo" for login and checkout)
 
@@ -81,6 +83,51 @@ having to resolve over multiple domains. Luckily, however, all AWS instances
 reside under the same VPC, meaning that when connecting through private IP (in
 the case of both the databases and the load balancer), the request never leaves
 the local network for resolution, resulting in better security and latency.
+
+### Adding New Movies with Foreign Keys to Other Tables
+
+Updating values into a highly connected relational database can be tricky,
+because one insertion can have a rippling affect on multiple different tables.
+In the case of inserting a new movie, said movie will have a rating,
+a director, stars, and genres, all of which have a respective id in their own
+tables.
+
+Fabflix has an employee dashboard only accessible by user accounts that are
+identified as employees. The dashboard has functionality that allows insertion
+of new movies into the database, along with any other relevant information
+pertaining to that movie. Due to the amount of modification that needs to
+happen in the database according to this insertion, the best method is to use
+a stored procedure in the database.
+
+~~~ mysql
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_movie`(
+    title varchar(100),
+    m_year int,
+    director varchar(100),
+    star_name varchar(100),
+    genre varchar(32)
+)
+BEGIN
+	IF NOT EXISTS (SELECT * FROM stars WHERE name = star_name) THEN
+		INSERT INTO stars VALUES (CONCAT("nm", (CAST(substring((select cid from (select max(id) as cid from stars) as c), 3) AS UNSIGNED) + 1)), star_name, NULL);
+	END IF;
+	IF NOT EXISTS (SELECT * FROM genres WHERE name = genre) THEN
+		INSERT INTO genres VALUES ((select cid from (select max(id) as cid from genres) as c) + 1, genre);
+	END IF;
+    IF EXISTS (SELECT * FROM movies WHERE movies.title = title AND movies.year = m_year AND movies.director = director) THEN
+		SELECT CONCAT(title, " already exists") as message;
+	ELSE
+		INSERT INTO movies (id, title, year, director)  VALUES (CONCAT("tt", (CAST(substring((select cid from (select max(id) as cid from movies) as c), 3) AS UNSIGNED) + 1)), title, m_year, director);
+        INSERT INTO stars_in_movies VALUES ((SELECT id FROM stars WHERE name = star_name LIMIT 1), (SELECT id FROM movies WHERE movies.title = title AND movies.year = m_year AND movies.director = director LIMIT 1));
+		INSERT INTO genres_in_movies VALUES ((SELECT id FROM genres WHERE name = genre LIMIT 1), (SELECT id FROM movies WHERE movies.title = title AND movies.year = m_year AND movies.director = director LIMIT 1));
+        INSERT INTO ratings VALUES ((SELECT id FROM movies WHERE movies.title = title AND movies.year = m_year AND movies.director = director LIMIT 1), 0, 0);
+        SELECT CONCAT("Successfully added Movie ID:", (SELECT id FROM movies WHERE movies.title = title AND movies.year = m_year AND movies.director = director LIMIT 1),
+        ", Genre ID:", (SELECT id FROM genres WHERE name = genre LIMIT 1), ", Star ID:", (SELECT id FROM stars WHERE name = star_name LIMIT 1)) as message;
+	END IF;
+END
+
+~~~
 
 ### Maintaining Cart Items in Session Data or Database
 
