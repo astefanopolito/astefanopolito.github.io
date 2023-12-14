@@ -1,150 +1,116 @@
-<p>Fabflix Demo: http://www.122bbread.com</p>
-
-<p>(Press “Demo” for login and checkout)</p>
-
 <h2 id="project-description">Project Description</h2>
 
-<p><img src="./FabFlix.png" alt="Fabflix" /></p>
+<p>Awk is a very unique scripting language used in Linux. It’s technically
+a command, such as “cd” or “ls”, but for input it accepts written scripts, like
+an interpreter. It is especially useful for data manipulation and analysis,
+since it’s primary feature is scanning documents line by line, matching and
+manipulating them according to how the inputted script is written.</p>
 
-<p>Fabflix is an exercise in implementing relational databases, load balancing,
-and cloud computing into a typical consumer model web application in order to
-make it scalable.</p>
+<p>Although its functionality is incredibly useful, it becomes more tedious when
+working with tsv, or tab separated, files. There is no built in functionality
+for referencing headers, as the program only runs line by line.</p>
 
-<p>The web application of choice in this scenario is a combination of an online
-store and movie database, such as IMDB.</p>
+<p>Thus, the goal of awkcel is to create a wrapper for awk, where columns in the
+file can be referenced by their headers, and data can be collected and analyzed
+solely through reference.</p>
 
-<p>On the client side interface, users can sort, filter, and navigate through
-a large movie database using various different criteria. The website is set up
-through a collection of tables and links, where users can click on various
-movies, genres, and stars to see all related information. After signing in,
-users can add movies to their cart, and place an order. After checkout, the
-user’s order will appear in their order history.</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
 
-<p>Users can filter the database by title, genre, and star. They can sort the
-database ascending or descending by alphabetical order or rating. There is also
-an advanced search function available to specify a movie’s title, year, genre,
-and director.</p>
+<span class="nv">awkstring</span><span class="o">=</span><span class="nv">$1</span>
+<span class="nv">file</span><span class="o">=</span><span class="nv">$2</span>
 
-<h2 id="design-choices">Design Choices</h2>
+<span class="c">#Get headers from file and store in bash array</span>
 
-<p>Fabflix is primarily comprised of Java, HTML, Javascript, and MySQL, all
-running on 3 AWS EC2 instances.</p>
+<span class="nv">headers</span><span class="o">=(</span><span class="si">$(</span><span class="nb">awk</span> <span class="nt">-F</span><span class="s1">'\t'</span> <span class="s1">'
+	BEGIN {
+	HEADER=0
+	}
+	substr($1,1,1) !="#" &amp;&amp; HEADER==0 {
+	HEADER=1;
+	for (i=1;i&lt;=NF;i++) {
+		print $i
+	}
+}'</span> <span class="nv">$file</span><span class="si">)</span><span class="o">)</span>
 
-<p>The backend uses Tomcat10 as a webserver to host Java Servlets and static web
-content in the form of HTML and javascript files. This serves the purpose of
-providing a user interface for reading and writing to the database.</p>
+<span class="c">#Skip header line and comments</span>
 
-<p>The database is hosted on a MySQL server that the servlets communicate with
-through JDBC. The relational database is comprised of eleven tables for
-subjects such as customers, movies, ratings, and stars, all connected through
-primary keys consisting of unique ids for each subject. This makes filtering
-and sorting large amounts of connected information simple and efficient.</p>
+<span class="nv">varstring</span><span class="o">=</span><span class="s2">"BEGIN {HEADER=0;"</span>
 
-<p>The 3 EC2 instances are designated to one load balancer, and two identical
-copies of the Fabflix application running on Tomcat, along with a MySQL
-database. An Apache server running on one instance balances requests by
-dividing load between the two instances via their private IP Addresses, making
-use of AWS’s VPC.</p>
+<span class="k">for</span> <span class="o">((</span> <span class="nv">i</span><span class="o">=</span>0 <span class="p">;</span> i &lt; <span class="k">${#</span><span class="nv">headers</span><span class="p">[@]</span><span class="k">}</span> <span class="p">;</span> i++<span class="o">))</span>
+<span class="k">do
+	</span><span class="nv">varstring</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">varstring</span><span class="k">}</span><span class="s2">COLNAMES[</span><span class="nv">$i</span><span class="s2">]=</span><span class="se">\"</span><span class="k">${</span><span class="nv">headers</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span><span class="k">}</span><span class="se">\"</span><span class="s2">;"</span>
+<span class="k">done
 
-<h2 id="technical-challenges-and-considerations">Technical Challenges and Considerations</h2>
+</span><span class="nv">varstring</span><span class="o">=</span><span class="s2">"</span><span class="nv">$varstring</span><span class="s2">} substr(</span><span class="se">\$</span><span class="s2">1,1,1)==</span><span class="se">\"</span><span class="s2">#</span><span class="se">\"</span><span class="s2">{next} HEADER==0{HEADER=1;next}{"</span>
 
-<h3 id="proper-database-connection-with-load-balancing">Proper Database Connection with Load Balancing</h3>
 
-<p>The cart and checkout feature of the application was implemented in order for
-there to be a scenario where data is being written to the database in the form
-of order history. Since there are two separate databases, and users can
-randomly be assigned to one of them, there needed to be a way to ensure both
-databases have consistent data.</p>
+<span class="k">for</span> <span class="o">((</span> <span class="nv">i</span><span class="o">=</span>0 <span class="p">;</span> i &lt; <span class="k">${#</span><span class="nv">headers</span><span class="p">[@]</span><span class="k">}</span> <span class="p">;</span> i++<span class="o">))</span>
+<span class="k">do</span>
+	<span class="c">#OPTIMIZATION::: Check if variable is called in the awk command passed by user</span>
+	<span class="c">#so unused columns are not loaded into memory needlessly</span>
 
-<p>In order to accomplish this, a Master Slave framework is set up between the two
-databases. One database recieves all of the update queries, and then relays the
-queries immediately to the other database, resulting in perfect replication.
-For this to work, one database must recieve all update queries, while evenly
-distributing select queries (Update being “write”, select being “read”). To
-accomplish this, both webservers will connect to the database running on
-localhost by default for read queries. Since the load balancer is distributing
-requests to the webservers, this inherently load balances read requests to the
-databases as well. Whenever a webserver is asked to write to the database, they
-will connect directly to the Master database directly by IP, ensuring all write
-requests are sent directly to the Master database.</p>
+	<span class="c">#NOTE: This runs the risk of loading unused columns if column names are refrenced</span>
+	<span class="c">#not as variables but rather as parts of strings</span>
+	<span class="k">if</span> <span class="o">[[</span> <span class="nv">$awkstring</span> <span class="o">=</span>~ <span class="k">${</span><span class="nv">headers</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span><span class="k">}</span> <span class="o">]]</span><span class="p">;</span> <span class="k">then
+		</span><span class="nv">varstring</span><span class="o">=</span><span class="k">${</span><span class="nv">varstring</span><span class="k">}${</span><span class="nv">headers</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span><span class="k">}</span><span class="o">=</span><span class="se">\$</span><span class="k">$((</span><span class="nv">$i</span><span class="o">+</span><span class="m">1</span><span class="k">))</span><span class="se">\;</span>
+	<span class="k">fi
+done
+</span><span class="nv">varstring</span><span class="o">=</span><span class="k">${</span><span class="nv">varstring</span><span class="k">}</span><span class="o">}</span>
 
-<p>The databases needed to be connected in some manner that ensured replication
-without an inordinate amount of latency. Connecting over the internet could
-introduce some fallibility, due to the uncertainty and latency of requests
-having to resolve over multiple domains. Luckily, however, all AWS instances
-reside under the same VPC, meaning that when connecting through private IP (in
-the case of both the databases and the load balancer), the request never leaves
-the local network for resolution, resulting in better security and latency.</p>
+<span class="c">#Load variables into user inputted awk command</span>
 
-<h3 id="maintaining-cart-items-in-session-data-or-database">Maintaining Cart Items in Session Data or Database</h3>
+<span class="nv">awkstring</span><span class="o">=</span><span class="s2">"</span><span class="k">${</span><span class="nv">varstring</span><span class="k">}${</span><span class="nv">awkstring</span><span class="k">}</span><span class="s2">"</span>
 
-<p>With most online services, user login is maintained within the session. If one
-revists a page using a web browser that both was signed in and contained
-cookies, if the session data hasn’t expired, that user will remained logged in.
-Fabflix follows this behavior, with the exception of items within the cart.
-While most web services will associate the cart with the user account, in
-Fabflix the cart lives and dies with the session.</p>
+<span class="c">#Finally, call awk</span>
 
-<p>Establishing cart permanence would require storing the cart data within the
-database, and replicating the cart data to all other databases. One possibility
-would be to create a new Item table, and associate all item entries with
-a customer ID as a primary key, however that would introduce many new
-individual queries for handling cart information, leading to more complication.</p>
+<span class="nb">awk</span> <span class="s2">"</span><span class="nv">$awkstring</span><span class="s2">"</span> <span class="nv">$file</span>
 
-<p>Another possibilty would be serializing the Item class already implemented in
-the backend, and simply storing the serialization in a new table with the
-customer ID as a primary key. This would be the most likely solution to
-permanence, however it contradicts the use of relational databases, as we are
-grouping distinct information together. This implementation would be more
-suited towards a NoSQL implementation, such as MongoDB, so it was not pursued.</p>
+</code></pre></div></div>
 
-<h3 id="query-building-for-various-search-operations">Query Building for Various Search Operations</h3>
+<p>Below is a quick example of how the script is used, where column names can be
+reference directly in the scripting language. This is an example scenario with
+historical stock data, where each column header is the name of a new stock. The
+goal here is to determine Amazon’s worst single day performance.</p>
 
-<p>Working with JDBC and MySQL requires query strings that are loaded into
-Statements and executed. This returns a ResultSet with the response data. For
-security and compatability with connection pooling, these must be Prepared
-Statements to prevent common injection vulnerabilities.</p>
+<p>SHELL COMMAND:</p>
 
-<p>Users have multiple options when searching for data in Fabflix. When there are
-multiple search conditions specified, it is far more efficient to specify these
-conditions in the query string, rather than sorting and filtering a widespread
-request of all data from the database. In order to accomplish this, query
-strings need to be dynamically updated according to the requested conditions.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+./awkcel 'BEGIN {
+	count=0;
+}
 
-<p>One method of doing this would be to use an established query string builder
-implementation in Java. This would look like something along the lines of jOOQ.
-There is contention about whether or not using a third party library to build
-queries is an anti-pattern, and whether or not it solves or further complicates
-problems. Given the highly specified format of what was required to make
-Fabflix work, making a smaller, customized query builder was deemed the best
-solution.</p>
+count==0{
+	max=AMZN;
+	count++;
+}
 
-<h2 id="choice-of-software-and-frameworks">Choice of Software and Frameworks</h2>
+count==1{
+	max=max-AMZN;
+	prev=AMZN
+	prevdate=date;
+	worst=date
+	count++;
+}
 
-<h3 id="tomcat-vs-springboot">Tomcat VS Springboot</h3>
+{
+	if ((prev - AMZN) &gt; max &amp;&amp; prev!="_" &amp;&amp; AMZN!="_") {
+		max=prev-AMZN
+		worst=date
+	}
+	prev=AMZN
+	prevdate=date
+}
 
-<p>Using a Java backend was not a very contentious idea, being that the
-alternative of NodeJS had some pros and cons, however choosing Tomcat over
-Springboot was more difficult.</p>
+END {
+	printf "%s: %d\n", worst, max;
+}
+' historical.2011.tsv
 
-<p>Springboot is a very mature and useful framework, which would take care of many
-tedious parts of the development process for the developer. It certainly covers
-many weaknesses of using only servlets, such as data validation. Should Fabflix
-continue to develop and it was decided to change technologies, this would be
-one of the first upgrades to take place. For now, however, as Fabflix is simply
-a demonstration, Java servlets and Tomcat more than suit the basic needs of
-Fabflix’s backend, especially since most of the heavy lifting is being done by
-Java itself.</p>
+---------------------------
+OUTPUT:
 
-<h3 id="vanilla-javascript-vs-jquery-vs-react">Vanilla Javascript VS JQuery VS React</h3>
+2011-10-26: 29
 
-<p>JQuery was the first choice in creating frotend backend separation, since it is
-very familiar, and is the next step from using the very outdated JSP framework
-for serving dynamic HTML. Into the development process however, it became clear
-that vanilla Javascript, especially “fetch”, could cover many of JQuery’s bases
-along with being much more up to date and supported.</p>
-
-<p>Should Fabflix undergo further development, React would appear to be a natural
-next step for the frontend, considering the incredible flexibility of Web
-Components, and greatly speeding up response times with React’s Virtual DOM.</p>
+---------------------------
+</code></pre></div></div>
 

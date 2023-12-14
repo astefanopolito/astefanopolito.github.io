@@ -4,7 +4,7 @@ title: Fabflix
 permalink: /Fabflix/
 ---
 
-[Github Repo](https://github.com/astefanopolito/Fabflix)
+[Github Repo](https://github.com/astefanopolito/Fabflix_Public)
 
 [Fabflix Demo](http://www.122bbread.com)
 
