@@ -14,4 +14,4 @@ layout: home
 
 <h1>Download Resume</h1>
 
-<a class="post-link" href="/pdfs/Resume_12_12_2023.pdf">Resume</a>
+<a class="post-link" href="/pdfs/Resume_12_14_2023.pdf">Resume</a>
